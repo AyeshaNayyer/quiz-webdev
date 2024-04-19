@@ -79,28 +79,66 @@ router.post('/ingredient',authenticate,async (req, res) => {
     }
   });
   // Delete any service. -- TESTED
+// Delete any recipe
 router.post("/deleteby", async (req, res) => {
-    try {
-      const service = await Service.findById(req.body.id);
-      if (!service) {
-        console.log("Ingredient not found.");
-        return res.status(404).json({ msg: "Ingredient not found" });
-      }
-  
-      // Check if the user is an admin or the vendor associated with the service
-      if (req.user.role === "admin") {
-        await Service.deleteOne({ _id: req.body.id });
-        console.log("Ingredient deleted.");
-        return res.json({ msg: "Service deleted" });
-      } else {
-        console.log("Unauthorized access.");
-        return res.status(403).json({ msg: "Not authorized to delete this service" });
-      }
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ msg: "Internal server error" });
+  try {
+    const recipe = await Recipe.findById(req.body.id);
+    if (!recipe) {
+      console.log("Recipe not found.");
+      return res.status(404).json({ msg: "Recipe not found" });
     }
-  });
+
+    // Check if the user is an admin or the vendor associated with the service
+    if (req.user.role === "admin") {
+      await Recipe.deleteOne({ _id: req.body.id });
+      console.log("Recipe deleted.");
+      return res.json({ msg: "Recipe deleted" });
+    } else {
+      console.log("Unauthorized access.");
+      return res.status(403).json({ msg: "Not authorized to delete this recipe" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Internal server error" });
+  }
+});
+
+  // POST endpoint to add an existing ingredient to an existing recipe --works
+router.post('/recipe/:recipeId/ingredient/:ingredientId', authenticate, async (req, res) => {
+  try {
+    const recipeId = req.params.recipeId;
+    const ingredientId = req.params.ingredientId;
+
+    // Check if the recipe exists
+    const existingRecipe = await Recipe.findById(recipeId);
+    if (!existingRecipe) {
+      return res.status(404).json({ msg: 'Recipe not found' });
+    }
+
+    // Check if the ingredient exists
+    const existingIngredient = await Ingredient.findById(ingredientId);
+    if (!existingIngredient) {
+      return res.status(404).json({ msg: 'Ingredient not found' });
+    }
+
+    // Check if the ingredient is already added to the recipe
+    if (existingRecipe.ingredient.includes(existingIngredient._id)) {
+      return res.status(400).json({ msg: 'Ingredient already added to the recipe' });
+    }
+
+    // Add the ingredient to the recipe's ingredient array
+    existingRecipe.ingredient.push(existingIngredient);
+    await existingRecipe.save();
+
+    res.status(201).json({ msg: 'Ingredient added to recipe successfully!', ingredient: existingIngredient });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: 'Internal Server Error' });
+  }
+});
+
+
+
   
 
 
