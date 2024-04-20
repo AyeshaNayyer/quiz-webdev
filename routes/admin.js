@@ -28,6 +28,15 @@ router.get("/recipe", async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 });
+router.get("/ingredient", async (req, res) => {
+  try {
+    const ingredient = await Ingredient.find();
+    res.json(ingredient);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
 
 
 router.use(authenticate); 
